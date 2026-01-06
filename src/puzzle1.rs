@@ -12,6 +12,13 @@ pub fn run() {
                 })
                 .count()
         })
-        .sum::<usize>();
-    println!("Puzzle 1, part 1 = {count}");
+        .collect::<Vec<_>>();
+    println!("Puzzle 1, part 1 = {}", count.iter().sum::<usize>());
+    println!(
+        "Puzzle 1, part 2 = {}",
+        count
+            .iter()
+            .filter(|val| val.is_multiple_of(2))
+            .sum::<usize>()
+    );
 }
