@@ -19,6 +19,11 @@ pub fn run() {
             .filter(|color| color.label() == Label::Green)
             .count()
     );
+
+    println!(
+        "Puzzle 3, part 3 = {}",
+        colors.iter().map(|color| color.cost()).sum::<i32>()
+    );
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
@@ -43,6 +48,10 @@ impl Color {
         } else {
             panic!("color cannot be labelled: {self}");
         }
+    }
+
+    fn cost(&self) -> i32 {
+        self.label().cost()
     }
 }
 
@@ -71,4 +80,15 @@ enum Label {
     Green,
     Blue,
     Special,
+}
+
+impl Label {
+    fn cost(&self) -> i32 {
+        match self {
+            Label::Red => 5,
+            Label::Green => 2,
+            Label::Blue => 4,
+            Label::Special => 10,
+        }
+    }
 }
