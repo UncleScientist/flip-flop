@@ -11,6 +11,14 @@ pub fn run() {
     let mut count_list = counts.iter().collect::<Vec<_>>();
     count_list.sort_by(|a, b| b.1.cmp(a.1));
     println!("Puzzle 3, part 1 = {}", count_list[0].0);
+
+    println!(
+        "Puzzle 3, part 2 = {}",
+        colors
+            .iter()
+            .filter(|color| color.label() == Label::Green)
+            .count()
+    );
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
@@ -18,6 +26,24 @@ struct Color {
     red: i32,
     green: i32,
     blue: i32,
+}
+
+impl Color {
+    fn label(&self) -> Label {
+        if self.red == self.green || self.red == self.blue || self.green == self.blue {
+            return Label::Special;
+        }
+
+        if self.red > self.green && self.red > self.blue {
+            Label::Red
+        } else if self.green > self.red && self.green > self.blue {
+            Label::Green
+        } else if self.blue > self.red && self.blue > self.green {
+            Label::Blue
+        } else {
+            panic!("color cannot be labelled: {self}");
+        }
+    }
 }
 
 impl FromStr for Color {
@@ -37,4 +63,12 @@ impl Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{},{},{}", self.red, self.green, self.blue)
     }
+}
+
+#[derive(PartialEq, Eq)]
+enum Label {
+    Red,
+    Green,
+    Blue,
+    Special,
 }
