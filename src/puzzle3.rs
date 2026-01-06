@@ -31,27 +31,32 @@ struct Color {
     red: i32,
     green: i32,
     blue: i32,
+    label: Label,
 }
 
 impl Color {
     fn label(&self) -> Label {
-        if self.red == self.green || self.red == self.blue || self.green == self.blue {
+        self.label
+    }
+
+    fn generate_label(red: i32, green: i32, blue: i32) -> Label {
+        if red == green || red == blue || green == blue {
             return Label::Special;
         }
 
-        if self.red > self.green && self.red > self.blue {
+        if red > green && red > blue {
             Label::Red
-        } else if self.green > self.red && self.green > self.blue {
+        } else if green > red && green > blue {
             Label::Green
-        } else if self.blue > self.red && self.blue > self.green {
+        } else if blue > red && blue > green {
             Label::Blue
         } else {
-            panic!("color cannot be labelled: {self}");
+            panic!("color cannot be labelled: {red}, {green}, {blue}");
         }
     }
 
     fn cost(&self) -> i32 {
-        self.label().cost()
+        self.label.cost()
     }
 }
 
@@ -60,10 +65,14 @@ impl FromStr for Color {
 
     fn from_str(line: &str) -> Result<Self, Self::Err> {
         let mut nums = line.split(',');
+        let red = nums.next().unwrap().parse().unwrap();
+        let green = nums.next().unwrap().parse().unwrap();
+        let blue = nums.next().unwrap().parse().unwrap();
         Ok(Self {
-            red: nums.next().unwrap().parse().unwrap(),
-            green: nums.next().unwrap().parse().unwrap(),
-            blue: nums.next().unwrap().parse().unwrap(),
+            red,
+            green,
+            blue,
+            label: Self::generate_label(red, green, blue),
         })
     }
 }
@@ -74,7 +83,7 @@ impl Display for Color {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, Hash, PartialEq, Eq, Copy, Clone)]
 enum Label {
     Red,
     Green,
