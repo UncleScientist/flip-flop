@@ -14,6 +14,25 @@ pub fn run() {
             })
             .sum::<usize>()
     );
+
+    let grid3d: Vec<Grid> = grids
+        .iter()
+        .map(|grid| Grid {
+            depth: grid.width,
+            ..*grid
+        })
+        .collect();
+
+    println!(
+        "Puzzle 7, part 2 = {}",
+        grid3d
+            .iter()
+            .map(|grid| {
+                let mut cache = GridCache::default();
+                cache.find(grid, &(0, 0, 0))
+            })
+            .sum::<usize>()
+    );
 }
 
 #[derive(Debug)]
