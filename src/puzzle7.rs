@@ -10,7 +10,7 @@ pub fn run() {
             .iter()
             .map(|grid| {
                 let mut cache = GridCache::default();
-                cache.find(grid, &(0, 0))
+                cache.find(grid, &(0, 0, 0))
             })
             .sum::<usize>()
     );
@@ -20,16 +20,17 @@ pub fn run() {
 struct Grid {
     width: usize,
     height: usize,
+    depth: usize,
 }
 
 #[derive(Default)]
 struct GridCache {
-    cache: HashMap<(usize, usize), usize>,
+    cache: HashMap<(usize, usize, usize), usize>,
 }
 
 impl GridCache {
-    fn find(&mut self, grid: &Grid, pos: &(usize, usize)) -> usize {
-        if pos.0 + 1 == grid.width && pos.1 + 1 == grid.height {
+    fn find(&mut self, grid: &Grid, pos: &(usize, usize, usize)) -> usize {
+        if pos.0 + 1 == grid.width && pos.1 + 1 == grid.height && pos.2 + 1 == grid.depth {
             return 1;
         }
 
@@ -40,11 +41,15 @@ impl GridCache {
         let mut count = 0;
 
         if pos.0 + 1 < grid.width {
-            count += self.find(grid, &(pos.0 + 1, pos.1));
+            count += self.find(grid, &(pos.0 + 1, pos.1, pos.2));
         }
 
         if pos.1 + 1 < grid.height {
-            count += self.find(grid, &(pos.0, pos.1 + 1));
+            count += self.find(grid, &(pos.0, pos.1 + 1, pos.2));
+        }
+
+        if pos.2 + 1 < grid.depth {
+            count += self.find(grid, &(pos.0, pos.1, pos.2 + 1));
         }
 
         self.cache.insert(*pos, count);
@@ -66,6 +71,7 @@ impl FromStr for Grid {
         Ok(Self {
             width: left.parse().unwrap(),
             height: right.parse().unwrap(),
+            depth: 1,
         })
     }
 }
