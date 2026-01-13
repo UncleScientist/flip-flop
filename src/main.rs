@@ -3,6 +3,7 @@ mod puzzle1;
 mod puzzle2;
 mod puzzle3;
 mod puzzle4;
+mod puzzle5;
 
 fn main() {
     demo::run();
@@ -14,4 +15,6 @@ fn main() {
     puzzle3::run();
     println!("-");
     puzzle4::run();
+    println!("-");
+    puzzle5::run();
 }
