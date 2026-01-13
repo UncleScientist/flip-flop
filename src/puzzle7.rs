@@ -33,6 +33,18 @@ pub fn run() {
             })
             .sum::<usize>()
     );
+
+    let multigrids: Vec<MultiGrid> = data.lines().map(|line| line.parse().unwrap()).collect();
+    println!(
+        "Puzzle 7, part 3 = {}",
+        multigrids
+            .iter()
+            .map(|grid| {
+                let mut cache = MultiCache::default();
+                cache.find(grid, &vec![0usize; grid.dimensions])
+            })
+            .sum::<usize>()
+    );
 }
 
 #[derive(Debug)]
@@ -92,5 +104,53 @@ impl FromStr for Grid {
             height: right.parse().unwrap(),
             depth: 1,
         })
+    }
+}
+
+#[derive(Debug)]
+struct MultiGrid {
+    dimensions: usize,
+    size: usize,
+}
+
+impl FromStr for MultiGrid {
+    type Err = Infallible;
+
+    fn from_str(line: &str) -> Result<Self, Self::Err> {
+        let (left, right) = line.split_once(' ').unwrap();
+        Ok(Self {
+            dimensions: left.parse().unwrap(),
+            size: right.parse().unwrap(),
+        })
+    }
+}
+
+#[derive(Default)]
+struct MultiCache {
+    cache: HashMap<Vec<usize>, usize>,
+}
+
+impl MultiCache {
+    fn find(&mut self, grid: &MultiGrid, pos: &[usize]) -> usize {
+        if pos.iter().all(|p| p + 1 == grid.size) {
+            return 1;
+        }
+
+        if let Some(answer) = self.cache.get(pos) {
+            return *answer;
+        }
+
+        let mut count = 0;
+
+        for i in 0..pos.len() {
+            if pos[i] + 1 < grid.size {
+                let mut next = pos.to_vec();
+                next[i] += 1;
+                count += self.find(grid, &next);
+            }
+        }
+
+        self.cache.insert(pos.to_vec(), count);
+        count
     }
 }
