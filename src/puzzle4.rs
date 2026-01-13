@@ -14,6 +14,17 @@ pub fn run() {
             })
             .0
     );
+
+    println!(
+        "Puzzle 4, part 2 = {}",
+        coords
+            .iter()
+            .fold((0, Coord::zero()), |(dist, pos), cur_pos| {
+                // println!("{dist}, {pos:?}");
+                (dist + cur_pos.diagonal_distance_to(&pos), *cur_pos)
+            })
+            .0
+    );
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -33,6 +44,13 @@ impl Coord {
 
     fn manhattan_distance_to(&self, other: &Self) -> usize {
         self.x.abs_diff(other.x) + self.y.abs_diff(other.y)
+    }
+
+    fn diagonal_distance_to(&self, other: &Self) -> usize {
+        let xdist = self.x.abs_diff(other.x);
+        let ydist = self.y.abs_diff(other.y);
+
+        xdist.max(ydist)
     }
 }
 
