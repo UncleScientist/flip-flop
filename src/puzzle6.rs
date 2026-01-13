@@ -12,6 +12,17 @@ pub fn run() {
             .filter(|bird| bird.in_frame())
             .count()
     );
+
+    println!(
+        "Puzzle 6, part 2 = {}",
+        (1..=1000)
+            .map(|time| birdspeeds
+                .iter()
+                .map(|speed| ZERO.location_at_time(speed, time * 3600))
+                .filter(|bird| bird.in_frame())
+                .count())
+            .sum::<usize>()
+    )
 }
 
 #[derive(Debug)]
