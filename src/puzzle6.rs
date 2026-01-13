@@ -9,7 +9,7 @@ pub fn run() {
         birdspeeds
             .iter()
             .map(|speed| ZERO.location_at_time(speed, 100))
-            .filter(|bird| bird.within(250, 250, 750, 750))
+            .filter(|bird| bird.in_frame())
             .count()
     );
 }
@@ -33,22 +33,28 @@ impl FromStr for Speed {
 }
 
 #[derive(Debug)]
-struct Loc {
+struct Loc<const SIZE: isize> {
     x: isize,
     y: isize,
 }
 
-const ZERO: Loc = Loc { x: 0, y: 0 };
+const ZERO: Loc<1000> = Loc { x: 0, y: 0 };
 
-impl Loc {
+impl<const SIZE: isize> Loc<SIZE> {
+    const UPPER_LEFT: isize = SIZE / 4;
+    const LOWER_RIGHT: isize = SIZE * 3 / 4;
+
     fn location_at_time(&self, speed: &Speed, t: isize) -> Self {
         Self {
-            x: (speed.x * t).rem_euclid(1000),
-            y: (speed.y * t).rem_euclid(1000),
+            x: (speed.x * t).rem_euclid(SIZE),
+            y: (speed.y * t).rem_euclid(SIZE),
         }
     }
 
-    fn within(&self, x1: isize, y1: isize, x2: isize, y2: isize) -> bool {
-        self.x >= x1 && self.x < x2 && self.y >= y1 && self.y < y2
+    fn in_frame(&self) -> bool {
+        self.x >= Self::UPPER_LEFT
+            && self.x < Self::LOWER_RIGHT
+            && self.y >= Self::UPPER_LEFT
+            && self.y < Self::LOWER_RIGHT
     }
 }
