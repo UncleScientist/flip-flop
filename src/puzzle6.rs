@@ -22,7 +22,18 @@ pub fn run() {
                 .filter(|bird| bird.in_frame())
                 .count())
             .sum::<usize>()
-    )
+    );
+
+    println!(
+        "Puzzle 6, part 3 = {}",
+        (1..=1000)
+            .map(|time| birdspeeds
+                .iter()
+                .map(|speed| ZERO.location_at_time(speed, time * 31556926))
+                .filter(|bird| bird.in_frame())
+                .count())
+            .sum::<usize>()
+    );
 }
 
 #[derive(Debug)]
