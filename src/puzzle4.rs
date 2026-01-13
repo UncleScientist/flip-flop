@@ -25,6 +25,26 @@ pub fn run() {
             })
             .0
     );
+
+    let mut sorted_coords = coords.clone();
+    // let mut sorted_coords = vec![Coord::_xy(3, 3), Coord::_xy(9, 9), Coord::_xy(6, 6)];
+    sorted_coords.sort_by(|a, b| {
+        Coord::zero()
+            .manhattan_distance_to(a)
+            .cmp(&Coord::zero().manhattan_distance_to(b))
+    });
+    // println!("{sorted_coords:?}");
+
+    println!(
+        "Puzzle 4, part 3 = {}",
+        sorted_coords
+            .iter()
+            .fold((0, Coord::zero()), |(dist, pos), cur_pos| {
+                // println!("{dist}, {pos:?} -> {cur_pos:?}");
+                (dist + cur_pos.diagonal_distance_to(&pos), *cur_pos)
+            })
+            .0
+    );
 }
 
 #[derive(Debug, Copy, Clone)]
