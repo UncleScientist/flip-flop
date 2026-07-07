@@ -1,13 +1,9 @@
 pub fn run() {
     let data = std::fs::read_to_string("input/puzzle-2.txt").expect("missing file");
-    let instructions = data
-        .chars()
-        .map(|ch| Direction::get(ch))
-        .collect::<Vec<_>>();
+    let instructions = data.chars().map(Direction::get);
     let mut wall = Wall::default();
 
-    wall.apply(&instructions);
-
+    wall.apply(instructions);
     println!("Puzzle 2, part 1 = {}", wall.part1());
 }
 
@@ -29,7 +25,7 @@ impl Wall {
         }
     }
 
-    fn apply(&mut self, instructions: &[Direction]) {
+    fn apply(&mut self, instructions: impl Iterator<Item = Direction>) {
         let mut pos = 0;
         for dir in instructions {
             match dir {
@@ -41,15 +37,16 @@ impl Wall {
     }
 
     fn part1(&self) -> usize {
-        let mut max = 0;
-        let mut pos = 0;
-        for (idx, val) in self.segments.iter().enumerate() {
-            if *val > max {
-                max = *val;
-                pos = idx + 1;
-            }
-        }
-        pos * max
+        let Some((index, max_val)) = self
+            .segments
+            .iter()
+            .enumerate()
+            .rev()
+            .max_by(|a, b| a.1.cmp(b.1))
+        else {
+            panic!("max not found");
+        };
+        (index + 1) * max_val
     }
 }
 
