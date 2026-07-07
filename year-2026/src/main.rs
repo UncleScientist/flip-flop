@@ -1,5 +1,5 @@
 mod puzzle1;
-// mod puzzle2;
+mod puzzle2;
 // mod puzzle3;
 // mod puzzle4;
 // mod puzzle5;
@@ -9,8 +9,8 @@ mod puzzle1;
 fn main() {
     println!("-");
     puzzle1::run();
-    // println!("-");
-    // puzzle2::run();
+    println!("-");
+    puzzle2::run();
     // println!("-");
     // puzzle3::run();
     // println!("-");
