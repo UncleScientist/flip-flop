@@ -1,6 +1,3 @@
-[package]
-name = "flip-flop"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
+[workspace]
+members = ["year-2025" , "year-2026"]
+resolver = "3"
