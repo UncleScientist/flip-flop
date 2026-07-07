@@ -1,12 +1,11 @@
 pub fn run() {
     let data = std::fs::read_to_string("input/puzzle-2.txt").expect("missing file");
-    let instructions = data.chars().map(Direction::get);
     let mut wall = Wall::default();
 
-    wall.do_part_1(instructions.clone());
+    wall.do_part_1(&data);
     println!("Puzzle 2, part 1 = {}", wall.part1_score());
 
-    println!("Puzzle 2, part 1 = {}", wall.do_part_2(instructions));
+    println!("Puzzle 2, part 1 = {}", wall.do_part_2(&data));
 }
 
 #[derive(Debug)]
@@ -27,7 +26,8 @@ impl Wall {
         }
     }
 
-    fn do_part_1(&mut self, instructions: impl Iterator<Item = Direction>) {
+    fn do_part_1(&mut self, data: &str) {
+        let instructions = data.chars().map(Direction::get);
         let mut pos = 0;
         for dir in instructions {
             match dir {
@@ -51,15 +51,15 @@ impl Wall {
         (index + 1) * max_val
     }
 
-    fn do_part_2(&mut self, instructions: impl Iterator<Item = Direction>) -> usize {
+    fn do_part_2(&mut self, instructions: &str) -> usize {
         let mut laser_pos = 0;
         let mut robot_pos = 0;
 
-        let forward = instructions.collect::<Vec<Direction>>();
-        let reverse = forward.iter().rev().copied().collect::<Vec<Direction>>();
+        let forward = instructions.chars().map(Direction::get);
+        let reverse = instructions.chars().rev().map(Direction::get);
 
         let mut count = 0;
-        for (laser, robot) in forward.iter().zip(reverse.iter()) {
+        for (laser, robot) in forward.zip(reverse) {
             match laser {
                 Direction::Left => laser_pos = (laser_pos + 99) % 100,
                 Direction::Right => laser_pos = (laser_pos + 1) % 100,
