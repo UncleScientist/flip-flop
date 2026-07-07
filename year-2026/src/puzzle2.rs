@@ -1,22 +1,20 @@
 pub fn run() {
     let data = std::fs::read_to_string("input/puzzle-2.txt").expect("missing file");
-    let mut wall = Wall::default();
+    let mut wall = Wall::new();
 
     wall.do_part_1(&data);
     println!("Puzzle 2, part 1 = {}", wall.part1_score());
 
     println!("Puzzle 2, part 1 = {}", wall.do_part_2(&data));
+
+    wall.reset();
+    wall.do_part_3(&data);
+    println!("Puzzle 2, part 1 = {}", wall.part1_score());
 }
 
 #[derive(Debug)]
 struct Wall {
     segments: [usize; 100],
-}
-
-impl Default for Wall {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl Wall {
@@ -73,9 +71,30 @@ impl Wall {
 
         count
     }
+
+    fn reset(&mut self) {
+        self.segments = [0; 100];
+    }
+
+    fn do_part_3(&mut self, data: &str) {
+        let forward = data.chars().map(Direction::get);
+        let reverse = data.chars().rev().map(Direction::get);
+
+        let mut laser_pos = 0;
+        for (forward_step, reverse_step) in forward.zip(reverse) {
+            match forward_step {
+                Direction::Left => laser_pos = (laser_pos + 99) % 100,
+                Direction::Right => laser_pos = (laser_pos + 1) % 100,
+            }
+            match reverse_step {
+                Direction::Left => laser_pos = (laser_pos + 1) % 100,
+                Direction::Right => laser_pos = (laser_pos + 99) % 100,
+            }
+            self.segments[laser_pos] += 1;
+        }
+    }
 }
 
-#[derive(Copy, Clone)]
 enum Direction {
     Left,
     Right,
