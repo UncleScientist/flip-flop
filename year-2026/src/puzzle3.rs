@@ -19,7 +19,20 @@ pub fn run() {
         .max_by(|a, b| a.1.cmp(&b.1))
         .unwrap()
         .0;
-    println!("Puzzle 3, part 1 = {max}");
+    println!("Puzzle 3, part 2 = {max}");
+
+    let mut max_sum = 0;
+    for append in ('a'..='z').chain(('A'..='Z').chain('0'..='9')) {
+        let sum = passwords
+            .iter()
+            .map(|pw| pw.with(append))
+            .map(|pw| pw.p2score())
+            .sum::<usize>();
+        if sum > max_sum {
+            max_sum = sum;
+        }
+    }
+    println!("Puzzle 3, part 3 = {max_sum}");
 }
 
 #[derive(Debug)]
@@ -77,6 +90,10 @@ impl Password {
             || self.0.find("blue").is_some();
 
         (first + found7 + max_count * max_count) * if color { 3 } else { 1 } * self.0.len()
+    }
+
+    fn with(&self, append: char) -> Self {
+        Self(format!("{}{append}", self.0))
     }
 }
 
