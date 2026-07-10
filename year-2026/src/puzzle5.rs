@@ -10,9 +10,14 @@ pub fn run() {
         streets.push(line.chars().collect());
     }
 
+    println!("Puzzle 5, part 1 = {}", count_visited(&streets));
+}
+
+fn count_visited(streets: &[Vec<char>]) -> usize {
     let mut pos = (0, 0);
     let mut visited = HashSet::new();
     visited.insert(pos);
+
     loop {
         let next = streets[pos.0][pos.1];
         pos = match next {
@@ -26,5 +31,6 @@ pub fn run() {
             break;
         }
     }
-    println!("Puzzle 5, part 1 = {}", visited.len());
+
+    visited.len()
 }
