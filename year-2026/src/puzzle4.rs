@@ -4,10 +4,10 @@ pub fn run() {
     let data = std::fs::read_to_string("input/puzzle-4.txt").expect("can't read file");
     // let data = std::fs::read_to_string("test.txt").expect("can't read file");
 
-    let flower = Flowerstalk::new(data.lines().map(|line| line.parse::<Branch>().unwrap()));
+    let mut flower = Flowerstalk::new(data.lines().map(|line| line.parse::<Branch>().unwrap()));
     println!("Puzzle 4, part 1 = {}", flower.count_leaves_above(400));
-
     println!("Puzzle 4, part 2 = {}", flower.count_swaps());
+    println!("Puzzle 4, part 3 = {}", flower.count_climbers());
 }
 
 #[derive(Debug)]
@@ -44,6 +44,37 @@ impl Flowerstalk {
             }
         }
         swaps
+    }
+
+    fn count_climbers(&mut self) -> usize {
+        let mut climbers = 0;
+        while let Some(pos) = self
+            .0
+            .iter()
+            .rev()
+            .position(|branch| matches!(branch, Branch::Left | Branch::Right))
+        {
+            let mut pos = self.0.len() - pos - 1;
+
+            let mut cur_side = self.0[pos];
+            let mut prev_side_pos = pos;
+
+            while self.0[pos - 1] != Branch::Flower {
+                pos -= 1;
+                if !matches!(self.0[pos], Branch::Left | Branch::Right) {
+                    continue;
+                }
+                if self.0[pos] != cur_side {
+                    cur_side = self.0[pos];
+                    self.0[prev_side_pos] = Branch::Stem;
+                }
+                prev_side_pos = pos;
+            }
+            self.0[prev_side_pos] = Branch::Stem;
+            climbers += 1;
+        }
+
+        climbers
     }
 }
 
