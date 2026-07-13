@@ -21,6 +21,10 @@ pub fn run() {
     let mut grid = Grid::new(&gears, start);
     grid.rotate_part_2();
     println!("Puzzle 6, part 2 = {}", grid.calculate_light_value());
+
+    let mut grid = Grid::new(&gears, start);
+    grid.rotate_part_3();
+    println!("Puzzle 6, part 3 = {}", grid.calculate_light_value());
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -57,6 +61,7 @@ struct Grid {
     start: (usize, usize),
     gears: Vec<Vec<Component>>,
     bluetooth: HashMap<(usize, usize), (usize, usize)>,
+    nonprime: HashSet<(usize, usize)>,
 }
 
 impl Grid {
@@ -84,11 +89,19 @@ impl Grid {
             bluetooth.insert(iloc, uc[&output]);
         }
 
-        println!("{bluetooth:?}");
+        let mut nonprime = HashSet::new();
+        for loc in uc.values() {
+            let count: usize = Self::count_gears(gears, *loc);
+            if !is_prime(count) {
+                nonprime.insert(*loc);
+            }
+        }
+
         Self {
             start,
             gears: gears.to_vec(),
             bluetooth,
+            nonprime,
         }
     }
 
@@ -168,6 +181,47 @@ impl Grid {
         }
     }
 
+    fn rotate_part_3(&mut self) {
+        let mut rotated = HashSet::new();
+        let mut queue = VecDeque::from([(self.start, Rotation::CounterClockwise)]);
+
+        self.gears[self.start.0][self.start.1] = Component::Gear(Rotation::CounterClockwise);
+
+        while let Some((pos, rot)) = queue.pop_front() {
+            let opposite = match rot {
+                Rotation::Still => panic!("prev gear at {pos:?} didn't move"),
+                Rotation::Clockwise => Rotation::CounterClockwise,
+                Rotation::CounterClockwise => Rotation::Clockwise,
+            };
+            if rotated.insert(pos) {
+                let mut check = Vec::new();
+                if pos.0 > 0 {
+                    check.push((pos.0 - 1, pos.1));
+                }
+                if pos.1 > 0 {
+                    check.push((pos.0, pos.1 - 1));
+                }
+                if pos.0 < self.gears.len() - 1 {
+                    check.push((pos.0 + 1, pos.1));
+                }
+                if pos.1 < self.gears[0].len() - 1 {
+                    check.push((pos.0, pos.1 + 1));
+                }
+
+                for loc in check {
+                    if matches!(self.gears[loc.0][loc.1], Component::Gear(_)) {
+                        self.gears[loc.0][loc.1] = Component::Gear(opposite);
+                        queue.push_back((loc, opposite));
+                    } else if let Some(btpos) = self.bluetooth.get(&loc) {
+                        if self.nonprime.contains(&btpos) {
+                            queue.push_back((*btpos, rot));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fn calculate_light_value(&self) -> u128 {
         let mut result = 0;
 
@@ -225,5 +279,70 @@ impl Grid {
             }
             println!();
         }
+    }
+
+    fn count_gears(gears: &[Vec<Component>], loc: (usize, usize)) -> usize {
+        let mut queue = VecDeque::from([loc]);
+        let mut visited = HashSet::new();
+
+        while let Some(pos) = queue.pop_front() {
+            let comp = gears[pos.0][pos.1];
+            if pos == loc || matches!(comp, Component::Gear(_)) {
+                if !visited.insert(pos) {
+                    continue;
+                }
+
+                if pos.0 > 0 {
+                    queue.push_back((pos.0 - 1, pos.1));
+                }
+                if pos.1 > 0 {
+                    queue.push_back((pos.0, pos.1 - 1));
+                }
+                if pos.0 < gears.len() - 1 {
+                    queue.push_back((pos.0 + 1, pos.1));
+                }
+                if pos.1 < gears[0].len() - 1 {
+                    queue.push_back((pos.0, pos.1 + 1));
+                }
+            }
+        }
+
+        visited.len() - 1
+    }
+}
+
+fn is_prime(count: usize) -> bool {
+    if count < 2 {
+        return false;
+    }
+    if count < 4 {
+        return true;
+    }
+    for div in 2..=count.isqrt() {
+        if count.is_multiple_of(div) {
+            return false;
+        }
+    }
+    true
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_prime() {
+        assert_eq!(false, is_prime(0));
+        assert_eq!(false, is_prime(1));
+        assert_eq!(true, is_prime(2));
+        assert_eq!(true, is_prime(3));
+        assert_eq!(false, is_prime(4));
+        assert_eq!(true, is_prime(5));
+        assert_eq!(false, is_prime(6));
+        assert_eq!(true, is_prime(7));
+        assert_eq!(false, is_prime(8));
+        assert_eq!(false, is_prime(9));
+        assert_eq!(false, is_prime(10));
+        assert_eq!(true, is_prime(11));
     }
 }
