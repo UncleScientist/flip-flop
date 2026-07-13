@@ -67,10 +67,10 @@ fn find_visited_with_illegal_right_turns(streets: &[Vec<char>]) -> Visited {
         while !visited.insert(pos) {
             illegal_turns += 1;
             if illegal_turns >= 4 {
-                return find_visited(streets, pos);
+                return visited;
             }
             if pos.0 == 0 || pos.1 == 0 || pos.1 >= streets.len() || pos.0 >= streets[0].len() {
-                return find_visited(streets, pos);
+                return visited;
             }
 
             let next = streets[pos.0][pos.1];
@@ -119,20 +119,21 @@ fn find_illegal_best(streets: &[Vec<char>], baseline_visited: &Visited) -> usize
 
     for rotate in baseline_visited {
         if rotate.0 == 0 || rotate.0 == last_row || rotate.1 == 0 || rotate.1 == last_col {
-            continue;
-        }
-        let mut permute = streets.to_owned();
-        for _ in 0..3 {
-            permute[rotate.0][rotate.1] = match permute[rotate.0][rotate.1] {
-                '^' => '>',
-                '>' => 'v',
-                'v' => '<',
-                '<' => '^',
-                _ => panic!("compiler bug"),
-            };
-            let visited = find_visited_with_illegal_right_turns(&permute).len();
-            println!("{visited}");
+            let visited = find_visited_with_illegal_right_turns(streets).len();
             max_visited = max_visited.max(visited);
+        } else {
+            let mut permute = streets.to_owned();
+            for _ in 0..3 {
+                permute[rotate.0][rotate.1] = match permute[rotate.0][rotate.1] {
+                    '^' => '>',
+                    '>' => 'v',
+                    'v' => '<',
+                    '<' => '^',
+                    _ => panic!("compiler bug"),
+                };
+                let visited = find_visited_with_illegal_right_turns(&permute).len();
+                max_visited = max_visited.max(visited);
+            }
         }
     }
     max_visited
