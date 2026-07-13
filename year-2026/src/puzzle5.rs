@@ -3,8 +3,8 @@ use std::collections::HashSet;
 type Visited = HashSet<(usize, usize)>;
 
 pub fn run() {
-    // let data = std::fs::read_to_string("input/puzzle-5.txt").expect("missing file");
-    let data = std::fs::read_to_string("test.txt").expect("missing file");
+    let data = std::fs::read_to_string("input/puzzle-5.txt").expect("missing file");
+    // let data = std::fs::read_to_string("test.txt").expect("missing file");
 
     let lines = data.lines().collect::<Vec<_>>();
 
