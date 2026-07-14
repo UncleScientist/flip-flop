@@ -212,10 +212,10 @@ impl Grid {
                     if matches!(self.gears[loc.0][loc.1], Component::Gear(_)) {
                         self.gears[loc.0][loc.1] = Component::Gear(opposite);
                         queue.push_back((loc, opposite));
-                    } else if let Some(btpos) = self.bluetooth.get(&loc) {
-                        if self.nonprime.contains(&btpos) {
-                            queue.push_back((*btpos, rot));
-                        }
+                    } else if let Some(btpos) = self.bluetooth.get(&loc)
+                        && self.nonprime.contains(btpos)
+                    {
+                        queue.push_back((*btpos, rot));
                     }
                 }
             }
