@@ -23,6 +23,7 @@ pub fn run() {
     };
     println!("Puzzle 7, part 1 = {}", game.solve_part_1());
     println!("Puzzle 7, part 2 = {}", game.solve_part_2());
+    println!("Puzzle 7, part 3 = {}", game.solve_part_3());
 }
 
 #[derive(Debug)]
@@ -72,6 +73,35 @@ impl SnakeGame {
         }
 
         snake.len() + 1
+    }
+
+    fn solve_part_3(&self) -> usize {
+        let mut snake = VecDeque::from([Point::default()]);
+        let mut head_loc = Point::default();
+        let mut sushi_eaten = 0;
+        let mut self_eat_count = 0;
+
+        for movement in &self.instructions {
+            head_loc += *movement;
+
+            if sushi_eaten < self.sushi.len() && head_loc == self.sushi[sushi_eaten] {
+                sushi_eaten += 1;
+            } else {
+                snake.pop_back();
+            }
+
+            for (idx, pos) in snake.iter().enumerate() {
+                if *pos == head_loc {
+                    self_eat_count += 1;
+                    snake.truncate(idx - 1);
+                    break;
+                }
+            }
+
+            snake.push_front(head_loc);
+        }
+
+        snake.len() * self_eat_count
     }
 }
 
