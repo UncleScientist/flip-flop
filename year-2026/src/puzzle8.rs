@@ -57,4 +57,32 @@ pub(crate) fn run() {
         stoats = next_stoats;
     }
     println!("Puzzle 8, part 2: {}", stoats.len());
+
+    let mut pairs = HashMap::<Pair, usize>::new();
+    pairs.insert(Pair('A', 'B'), 1);
+
+    for _generation in 0..21 {
+        let mut next_pairs = HashMap::new();
+
+        for (pair, count) in &pairs {
+            if let Some(children) = map.get(&(pair.0, pair.1)) {
+                let mut first = pair.0;
+                for ch in children.chars() {
+                    let p = Pair(first, ch);
+                    *next_pairs.entry(p).or_insert(0) += count;
+                    first = ch;
+                }
+                *next_pairs.entry(Pair(first, pair.1)).or_insert(0) += count;
+            } else {
+                panic!("can't find stoat pair for {pair:?}");
+            }
+        }
+
+        pairs = next_pairs;
+        // println!("{pairs:?}");
+    }
+    println!("Puzzle 8, part 3: {}", 1 + pairs.values().sum::<usize>());
 }
+
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+struct Pair(char, char);
