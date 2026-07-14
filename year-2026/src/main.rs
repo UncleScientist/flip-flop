@@ -8,20 +8,19 @@ mod puzzle7;
 mod puzzle8;
 
 fn main() {
-    println!("-");
-    puzzle1::run();
-    println!("-");
-    puzzle2::run();
-    println!("-");
-    puzzle3::run();
-    println!("-");
-    puzzle4::run();
-    println!("-");
-    puzzle5::run();
-    println!("-");
-    puzzle6::run();
+    puzzle8::run();
     println!("-");
     puzzle7::run();
     println!("-");
-    puzzle8::run();
+    puzzle6::run();
+    println!("-");
+    puzzle5::run();
+    println!("-");
+    puzzle4::run();
+    println!("-");
+    puzzle3::run();
+    println!("-");
+    puzzle2::run();
+    println!("-");
+    puzzle1::run();
 }

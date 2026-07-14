@@ -100,7 +100,6 @@ impl FromStr for Branch {
         } else if line.contains(" |") {
             Ok(Self::Stem)
         } else {
-            println!("-- {line} --");
             assert!(line.contains("#"));
             Ok(Self::Ground)
         }
