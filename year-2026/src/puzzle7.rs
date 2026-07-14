@@ -1,4 +1,4 @@
-use std::{convert::Infallible, ops::AddAssign, str::FromStr};
+use std::{collections::VecDeque, convert::Infallible, ops::AddAssign, str::FromStr};
 
 pub fn run() {
     // let data = std::fs::read_to_string("test.txt").expect("file");
@@ -22,6 +22,7 @@ pub fn run() {
         sushi,
     };
     println!("Puzzle 7, part 1 = {}", game.solve_part_1());
+    println!("Puzzle 7, part 2 = {}", game.solve_part_2());
 }
 
 #[derive(Debug)]
@@ -45,6 +46,32 @@ impl SnakeGame {
         }
 
         sushi_eaten
+    }
+
+    fn solve_part_2(&self) -> usize {
+        let mut snake = VecDeque::from([Point::default()]);
+        let mut head_loc = Point::default();
+        let mut sushi_eaten = 0;
+
+        'out: for movement in &self.instructions {
+            head_loc += *movement;
+
+            if head_loc == self.sushi[sushi_eaten] {
+                sushi_eaten += 1;
+            } else {
+                snake.pop_back();
+            }
+
+            for pos in &snake {
+                if *pos == head_loc {
+                    break 'out;
+                }
+            }
+
+            snake.push_front(head_loc);
+        }
+
+        snake.len() + 1
     }
 }
 
