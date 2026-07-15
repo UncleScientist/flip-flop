@@ -6,8 +6,11 @@ mod puzzle5;
 mod puzzle6;
 mod puzzle7;
 mod puzzle8;
+mod puzzle9;
 
 fn main() {
+    puzzle9::run();
+    println!("-");
     puzzle8::run();
     println!("-");
     puzzle7::run();
