@@ -4,6 +4,7 @@ pub fn run() {
     let data = std::fs::read_to_string("input/puzzle-10.txt").expect("missing input file");
     let computer = Computer::new(&data.lines().collect::<Vec<&str>>());
     println!("Puzzle 10, part 1 = {}", computer.run()[0]);
+    println!("Puzzle 10, part 2 = {}", computer.run_up_to_5000000());
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -120,6 +121,27 @@ impl Computer {
         }
 
         regs
+    }
+
+    fn run_up_to_5000000(&self) -> usize {
+        let mut count = 0;
+
+        for starting_val in 0..100 {
+            let mut regs = [0u16; 16];
+            regs[0] = starting_val;
+            let mut pc = 0;
+            let mut step_count = 0;
+            while pc < self.instr.len() {
+                self.step(&mut pc, &mut regs);
+                step_count += 1;
+                if step_count > 5_000_000 {
+                    count += 1;
+                    break;
+                }
+            }
+        }
+
+        count
     }
 }
 
