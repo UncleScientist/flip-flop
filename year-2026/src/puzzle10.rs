@@ -74,45 +74,49 @@ impl Computer {
         Self { labels, instr }
     }
 
+    fn step(&self, pc: &mut usize, regs: &mut [u16; 16]) {
+        *pc += 1;
+        match self.instr[*pc - 1] {
+            Instruction::Load(value, Reg(reg)) => regs[reg] = value,
+            Instruction::Copy(Reg(src), Reg(dst)) => regs[dst] = regs[src],
+            Instruction::Add(Reg(src1), Reg(src2), Reg(dst)) => {
+                regs[dst] = regs[src1].wrapping_add(regs[src2]);
+            }
+            Instruction::Sub(Reg(src1), Reg(src2), Reg(dst)) => {
+                regs[dst] = regs[src1].wrapping_sub(regs[src2]);
+            }
+            Instruction::Mul(Reg(src1), Reg(src2), Reg(dst)) => {
+                regs[dst] = regs[src1].wrapping_mul(regs[src2]);
+            }
+            Instruction::Mod(Reg(src1), Reg(src2), Reg(dst)) => {
+                regs[dst] = if regs[src2] == 0 {
+                    0
+                } else {
+                    regs[src1] % regs[src2]
+                };
+            }
+            Instruction::Inc(Reg(reg)) => regs[reg] = regs[reg].wrapping_add(1),
+            Instruction::Dec(Reg(reg)) => regs[reg] = regs[reg].wrapping_sub(1),
+            Instruction::Jump(label) => *pc = self.labels[label],
+            Instruction::Jeq(Reg(reg), label) => {
+                if regs[reg] == 0 {
+                    *pc = self.labels[label];
+                }
+            }
+            Instruction::Jne(Reg(reg), label) => {
+                if regs[reg] != 0 {
+                    *pc = self.labels[label];
+                }
+            }
+        }
+    }
+
     fn run(&self) -> [u16; 16] {
         let mut regs = [0u16; 16];
         let mut pc = 0;
 
         while pc < self.instr.len() {
-            pc += 1;
-            match self.instr[pc - 1] {
-                Instruction::Load(value, Reg(reg)) => regs[reg] = value,
-                Instruction::Copy(Reg(src), Reg(dst)) => regs[dst] = regs[src],
-                Instruction::Add(Reg(src1), Reg(src2), Reg(dst)) => {
-                    regs[dst] = regs[src1].wrapping_add(regs[src2]);
-                }
-                Instruction::Sub(Reg(src1), Reg(src2), Reg(dst)) => {
-                    regs[dst] = regs[src1].wrapping_sub(regs[src2]);
-                }
-                Instruction::Mul(Reg(src1), Reg(src2), Reg(dst)) => {
-                    regs[dst] = regs[src1].wrapping_mul(regs[src2]);
-                }
-                Instruction::Mod(Reg(src1), Reg(src2), Reg(dst)) => {
-                    regs[dst] = if regs[src2] == 0 {
-                        0
-                    } else {
-                        regs[src1] % regs[src2]
-                    };
-                }
-                Instruction::Inc(Reg(reg)) => regs[reg] = regs[reg].wrapping_add(1),
-                Instruction::Dec(Reg(reg)) => regs[reg] = regs[reg].wrapping_sub(1),
-                Instruction::Jump(label) => pc = self.labels[label],
-                Instruction::Jeq(Reg(reg), label) => {
-                    if regs[reg] == 0 {
-                        pc = self.labels[label];
-                    }
-                }
-                Instruction::Jne(Reg(reg), label) => {
-                    if regs[reg] != 0 {
-                        pc = self.labels[label];
-                    }
-                }
-            }
+            self.step(&mut pc, &mut regs);
         }
 
         regs
