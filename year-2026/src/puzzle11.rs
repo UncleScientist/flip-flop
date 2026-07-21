@@ -1,8 +1,8 @@
 use std::{collections::HashMap, convert::Infallible, str::FromStr};
 
 pub fn run() {
-    // let data = std::fs::read_to_string("input/puzzle-11.txt").expect("missing input");
-    let data = std::fs::read_to_string("test.txt").expect("missing input");
+    let data = std::fs::read_to_string("input/puzzle-11.txt").expect("missing input");
+    // let data = std::fs::read_to_string("test.txt").expect("missing input");
     let dna_sets = data.split("\n\n").collect::<Vec<_>>();
 
     let dna_sets = dna_sets
@@ -11,21 +11,20 @@ pub fn run() {
         .collect::<Vec<_>>();
 
     let mut biomass = 0;
-    for set in dna_sets {
+    println!("{}", dna_sets.len());
+    for (i, set) in dna_sets.into_iter().enumerate() {
         let mut tree = Tree::new(set);
-        for _year in 0..100 {
+        for year in 0..100 {
             tree.grow();
-            tree._print();
-            tree.grow();
-            tree._print();
 
             let energy_required = tree.energy_required();
             let energy_produced = tree.energy_produced();
 
-            if energy_required < energy_produced {
+            if year >= 4 && energy_required > energy_produced {
                 break;
             }
         }
+        println!("{i:3} = {}", tree.mass());
         biomass += tree.mass();
     }
 
@@ -88,17 +87,11 @@ impl Tree {
                         let entry = new_trunk.get(&newpos);
                         if entry.is_none() {
                             new_trunk.insert(newpos, *id);
-                        } else {
-                            match entry {
-                                Some(sprout) => {
-                                    if let Some(s) = sprout
-                                        && s < next
-                                    {
-                                        new_trunk.insert(newpos, *id);
-                                    }
-                                }
-                                None => {} // stem already exists here
-                            }
+                        } else if let Some(sprout) = entry
+                            && let Some(s) = sprout
+                            && s < next
+                        {
+                            new_trunk.insert(newpos, *id);
                         }
                         self.height = self.height.max(newpos.0);
                         self.leftmost = self.leftmost.min(newpos.1);
@@ -113,7 +106,23 @@ impl Tree {
     }
 
     fn energy_produced(&self) -> usize {
-        0
+        let mut energy = 0;
+        for (pos, _) in self.trunk.iter().filter(|(_, x)| x.is_none()) {
+            let height = 10.min(pos.0 + 1);
+            let mut multiplier = 3;
+            let mut look = pos.0 + 1;
+            while multiplier > 0 && look <= self.height {
+                if let Some(item) = self.trunk.get(&(look, pos.1))
+                    && item.is_none()
+                {
+                    multiplier -= 1;
+                }
+                look += 1;
+            }
+            energy += height * multiplier;
+        }
+
+        energy as usize
     }
 
     fn _print(&self) {
