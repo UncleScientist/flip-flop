@@ -66,6 +66,42 @@ impl Forest {
             .collect();
         Self { trees, ..*self }
     }
+
+    fn energy_required_for(&self, id: TreeID) -> usize {
+        self.trees
+            .iter()
+            .filter(|(_, seg)| match seg {
+                Segment::Stem(tree_id) => id == *tree_id,
+                Segment::Sprout(tree_id, _) => id == *tree_id,
+            })
+            .count()
+            * 3
+    }
+
+    fn energy_produced_by(&self, id: TreeID) -> usize {
+        let this_tree = self.trees.iter().filter(|(_, seg)| match seg {
+            Segment::Stem(tree_id) => id == *tree_id,
+            _ => false,
+        });
+        let mut energy = 0;
+
+        for (pos, _) in this_tree {
+            let height = 10.min(pos.0 + 1);
+            let mut multiplier = 3;
+            let mut look = pos.0 + 1;
+            while multiplier > 0 && look <= self.height {
+                if let Some(item) = self.trees.get(&(look, pos.1))
+                    && matches!(item, Segment::Stem(_))
+                {
+                    multiplier -= 1;
+                }
+                look += 1;
+            }
+            energy += height * multiplier;
+        }
+
+        energy as usize
+    }
 }
 
 #[derive(Debug)]
@@ -89,7 +125,7 @@ impl Tree {
     }
 
     fn energy_required(&self, forest: &Forest) -> usize {
-        forest.trees.len() * 3
+        forest.energy_required_for(self.id)
     }
 
     fn mass(&self, forest: &Forest) -> usize {
@@ -145,27 +181,7 @@ impl Tree {
     }
 
     fn energy_produced(&self, forest: &Forest) -> usize {
-        let mut energy = 0;
-        for (pos, _) in forest
-            .trees
-            .iter()
-            .filter(|(_, seg)| matches!(seg, Segment::Stem(_)))
-        {
-            let height = 10.min(pos.0 + 1);
-            let mut multiplier = 3;
-            let mut look = pos.0 + 1;
-            while multiplier > 0 && look <= forest.height {
-                if let Some(item) = forest.trees.get(&(look, pos.1))
-                    && matches!(item, Segment::Stem(_))
-                {
-                    multiplier -= 1;
-                }
-                look += 1;
-            }
-            energy += height * multiplier;
-        }
-
-        energy as usize
+        forest.energy_produced_by(self.id)
     }
 
     fn _print(&self, forest: &Forest) {
