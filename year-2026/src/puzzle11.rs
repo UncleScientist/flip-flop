@@ -10,9 +10,13 @@ pub fn run() {
         .map(|set| set.parse::<DnaSet>().unwrap())
         .collect::<Vec<_>>();
 
+    println!("Puzzle 11, part 1 = {}", part1(&dna_sets));
+}
+
+fn part1(dna_sets: &[DnaSet]) -> usize {
     let mut biomass = 0;
-    for (id, set) in dna_sets.into_iter().enumerate() {
-        let mut tree = Tree::new(set, TreeID(id));
+    for set in dna_sets {
+        let mut tree = Tree::new(set.clone(), TreeID(0));
         let mut forest = Forest::new(1);
 
         for year in 0..100 {
@@ -28,7 +32,7 @@ pub fn run() {
         biomass += tree.mass(&forest);
     }
 
-    println!("Puzzle 11, part 1 = {biomass}");
+    biomass
 }
 
 #[derive(Debug, Default)]
@@ -102,6 +106,13 @@ impl Forest {
 
         energy as usize
     }
+
+    fn find_segments_for(&self, id: TreeID) -> impl Iterator<Item = (&(isize, isize), &Segment)> {
+        self.trees.iter().filter(move |(_, seg)| match seg {
+            Segment::Stem(tree_id) => id == *tree_id,
+            Segment::Sprout(tree_id, _) => id == *tree_id,
+        })
+    }
 }
 
 #[derive(Debug)]
@@ -135,7 +146,7 @@ impl Tree {
     fn grow(&mut self, forest: &mut Forest) {
         let mut new_forest: Forest = forest.get_stems();
 
-        for (pos, segment) in forest.trees.iter() {
+        for (pos, segment) in forest.find_segments_for(self.id) {
             if let Segment::Sprout(_, sprout) = segment {
                 for (id, dir) in [
                     self.rules.dna[*sprout].left,
@@ -158,7 +169,8 @@ impl Tree {
                                 .trees
                                 .insert(newpos, Segment::Sprout(self.id, *next));
                         } else if let Some(sprout) = entry
-                            && let Segment::Sprout(_, s) = sprout
+                            && let Segment::Sprout(tree_id, s) = sprout
+                            && *tree_id == self.id
                             && s < next
                         {
                             new_forest
@@ -201,7 +213,7 @@ impl Tree {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct DnaSet {
     dna: Vec<DnaID>,
 }
@@ -235,7 +247,7 @@ impl FromStr for DnaSet {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 struct DnaID {
     left: Option<usize>,
     above: Option<usize>,
