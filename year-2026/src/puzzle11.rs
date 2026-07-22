@@ -11,8 +11,7 @@ pub fn run() {
         .collect::<Vec<_>>();
 
     let mut biomass = 0;
-    println!("{}", dna_sets.len());
-    for (i, set) in dna_sets.into_iter().enumerate() {
+    for set in dna_sets {
         let mut tree = Tree::new(set);
         for year in 0..100 {
             tree.grow();
@@ -24,7 +23,6 @@ pub fn run() {
                 break;
             }
         }
-        println!("{i:3} = {}", tree.mass());
         biomass += tree.mass();
     }
 
@@ -34,17 +32,23 @@ pub fn run() {
 #[derive(Debug)]
 struct Tree {
     rules: DnaSet,
-    trunk: HashMap<(isize, isize), Option<usize>>,
+    trunk: HashMap<(isize, isize), Segment>,
     height: isize,
     leftmost: isize,
     rightmost: isize,
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+enum Segment {
+    Stem,
+    Sprout(usize),
 }
 
 impl Tree {
     fn new(rules: DnaSet) -> Self {
         Self {
             rules,
-            trunk: HashMap::from([((0, 0), Some(0))]),
+            trunk: HashMap::from([((0, 0), Segment::Sprout(0))]),
             height: 1,
             leftmost: 0,
             rightmost: 0,
@@ -60,15 +64,16 @@ impl Tree {
     }
 
     fn grow(&mut self) {
-        let mut new_trunk: HashMap<(isize, isize), Option<usize>> = self
+        let mut new_trunk: HashMap<(isize, isize), Segment> = self
             .trunk
             .iter()
-            .filter(|(_, x)| x.is_none())
-            .map(|(p, s)| (*p, *s))
+            .filter(|(_, seg)| matches!(seg, Segment::Stem))
+            // .cloned()
+            .map(|(pos, seg)| (*pos, *seg)) // why can't I clone?
             .collect();
 
         for (pos, segment) in self.trunk.drain() {
-            if let Some(sprout) = segment {
+            if let Segment::Sprout(sprout) = segment {
                 for (id, dir) in [
                     self.rules.dna[sprout].left,
                     self.rules.dna[sprout].above,
@@ -86,12 +91,12 @@ impl Tree {
 
                         let entry = new_trunk.get(&newpos);
                         if entry.is_none() {
-                            new_trunk.insert(newpos, *id);
+                            new_trunk.insert(newpos, Segment::Sprout(*next));
                         } else if let Some(sprout) = entry
-                            && let Some(s) = sprout
+                            && let Segment::Sprout(s) = sprout
                             && s < next
                         {
-                            new_trunk.insert(newpos, *id);
+                            new_trunk.insert(newpos, Segment::Sprout(*next));
                         }
                         self.height = self.height.max(newpos.0);
                         self.leftmost = self.leftmost.min(newpos.1);
@@ -99,7 +104,7 @@ impl Tree {
                     }
                 }
             }
-            new_trunk.insert(pos, None);
+            new_trunk.insert(pos, Segment::Stem);
         }
 
         self.trunk = new_trunk;
@@ -107,13 +112,17 @@ impl Tree {
 
     fn energy_produced(&self) -> usize {
         let mut energy = 0;
-        for (pos, _) in self.trunk.iter().filter(|(_, x)| x.is_none()) {
+        for (pos, _) in self
+            .trunk
+            .iter()
+            .filter(|(_, seg)| matches!(seg, Segment::Stem))
+        {
             let height = 10.min(pos.0 + 1);
             let mut multiplier = 3;
             let mut look = pos.0 + 1;
             while multiplier > 0 && look <= self.height {
                 if let Some(item) = self.trunk.get(&(look, pos.1))
-                    && item.is_none()
+                    && item == &Segment::Stem
                 {
                     multiplier -= 1;
                 }
@@ -129,10 +138,9 @@ impl Tree {
         for row in 0..=self.height {
             for col in self.leftmost..=self.rightmost {
                 if let Some(segment) = self.trunk.get(&(row, col)) {
-                    if segment.is_none() {
-                        print!("#");
-                    } else {
-                        print!("@");
+                    match segment {
+                        Segment::Stem => print!("#"),
+                        Segment::Sprout(_) => print!("@"),
                     }
                 } else {
                     print!(" ");
