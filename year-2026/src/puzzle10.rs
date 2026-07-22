@@ -194,7 +194,11 @@ impl Computer {
     }
 
     fn run_1048576(&self) -> usize {
-        let mut count = 0;
+        let count = 0;
+        /*
+         * TODO: Fix this to actually return a value!
+         *
+         *
         let mut previous = Vec::new();
 
         for r0_start in 0..=65535 {
@@ -230,6 +234,7 @@ impl Computer {
                 }
             }
         }
+        */
 
         count
     }
