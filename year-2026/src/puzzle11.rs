@@ -2,15 +2,24 @@ use std::{collections::HashMap, convert::Infallible, str::FromStr};
 
 pub fn run() {
     let data = std::fs::read_to_string("input/puzzle-11.txt").expect("missing input");
-    // let data = std::fs::read_to_string("test.txt").expect("missing input");
-    let dna_sets = data.split("\n\n").collect::<Vec<_>>();
-
-    let dna_sets = dna_sets
+    //let data = std::fs::read_to_string("test.txt").expect("missing input");
+    let dna_sets = data
+        .split("\n\n")
         .into_iter()
         .map(|set| set.parse::<DnaSet>().unwrap())
         .collect::<Vec<_>>();
 
     println!("Puzzle 11, part 1 = {}", part1(&dna_sets));
+
+    /*
+    let data = std::fs::read_to_string("test2.txt").expect("missing input");
+    let dna_sets = data
+        .split("\n\n")
+        .into_iter()
+        .map(|set| set.parse::<DnaSet>().unwrap())
+        .collect::<Vec<_>>();
+    */
+    println!("Puzzle 11, part 2 = {}", part2(&dna_sets));
 }
 
 fn part1(dna_sets: &[DnaSet]) -> usize {
@@ -33,6 +42,38 @@ fn part1(dna_sets: &[DnaSet]) -> usize {
     }
 
     biomass
+}
+
+fn part2(dna_sets: &[DnaSet]) -> usize {
+    let mut forest = Forest::new(dna_sets.len());
+
+    let mut trees = dna_sets
+        .iter()
+        .enumerate()
+        .map(|(id, set)| Tree::new(set.clone(), TreeID(id)))
+        .collect::<Vec<_>>();
+
+    for year in 0..100 {
+        for tree in trees.iter_mut().filter(|tree| !tree.dead) {
+            tree.grow(&mut forest);
+        }
+
+        for tree in trees.iter_mut().filter(|tree| !tree.dead) {
+            let energy_required = tree.energy_required(&forest);
+            let energy_produced = tree.energy_produced(&forest);
+
+            if year >= 4 && energy_required > energy_produced {
+                tree.dead = true;
+            }
+        }
+    }
+
+    println!("{}", forest.mass());
+    trees
+        .iter()
+        .filter(|tree| tree.dead)
+        .map(|tree| tree.mass(&forest))
+        .sum()
 }
 
 #[derive(Debug, Default)]
@@ -60,11 +101,14 @@ impl Forest {
         }
     }
 
-    fn get_stems(&self) -> Self {
+    fn get_segments(&self, id: TreeID) -> Self {
         let trees = self
             .trees
             .iter()
-            .filter(|(_, seg)| matches!(seg, Segment::Stem(_)))
+            .filter(|(_, seg)| match seg {
+                Segment::Stem(_) => true,
+                Segment::Sprout(tree_id, _) => *tree_id != id,
+            })
             // .cloned()
             .map(|(pos, seg)| (*pos, *seg)) // why can't I clone?
             .collect();
@@ -113,12 +157,37 @@ impl Forest {
             Segment::Sprout(tree_id, _) => id == *tree_id,
         })
     }
+
+    fn _print(&self) {
+        for row in 0..=self.height {
+            for col in self.leftmost..=self.rightmost {
+                if let Some(segment) = self.trees.get(&(row, col)) {
+                    match segment {
+                        Segment::Stem(_) => print!("#"),
+                        Segment::Sprout(_, _) => print!("@"),
+                    }
+                } else {
+                    print!(" ");
+                }
+            }
+            println!();
+        }
+    }
+
+    fn mass(&self) -> usize {
+        self.trees.len()
+    }
+
+    fn mass_of(&self, id: TreeID) -> usize {
+        self.find_segments_for(id).count()
+    }
 }
 
 #[derive(Debug)]
 struct Tree {
     rules: DnaSet,
     id: TreeID,
+    dead: bool,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -132,7 +201,11 @@ struct TreeID(usize);
 
 impl Tree {
     fn new(rules: DnaSet, id: TreeID) -> Self {
-        Self { rules, id }
+        Self {
+            rules,
+            id,
+            dead: false,
+        }
     }
 
     fn energy_required(&self, forest: &Forest) -> usize {
@@ -140,11 +213,11 @@ impl Tree {
     }
 
     fn mass(&self, forest: &Forest) -> usize {
-        forest.trees.len()
+        forest.mass_of(self.id)
     }
 
     fn grow(&mut self, forest: &mut Forest) {
-        let mut new_forest: Forest = forest.get_stems();
+        let mut new_forest: Forest = forest.get_segments(self.id);
 
         for (pos, segment) in forest.find_segments_for(self.id) {
             if let Segment::Sprout(_, sprout) = segment {
@@ -168,10 +241,9 @@ impl Tree {
                             new_forest
                                 .trees
                                 .insert(newpos, Segment::Sprout(self.id, *next));
-                        } else if let Some(sprout) = entry
-                            && let Segment::Sprout(tree_id, s) = sprout
+                        } else if let Some(Segment::Sprout(tree_id, sprout)) = entry
                             && *tree_id == self.id
-                            && s < next
+                            && sprout < next
                         {
                             new_forest
                                 .trees
@@ -194,22 +266,6 @@ impl Tree {
 
     fn energy_produced(&self, forest: &Forest) -> usize {
         forest.energy_produced_by(self.id)
-    }
-
-    fn _print(&self, forest: &Forest) {
-        for row in 0..=forest.height {
-            for col in forest.leftmost..=forest.rightmost {
-                if let Some(segment) = forest.trees.get(&(row, col)) {
-                    match segment {
-                        Segment::Stem(_) => print!("#"),
-                        Segment::Sprout(_, _) => print!("@"),
-                    }
-                } else {
-                    print!(" ");
-                }
-            }
-            println!();
-        }
     }
 }
 
