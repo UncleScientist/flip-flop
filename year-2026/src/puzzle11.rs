@@ -2,14 +2,14 @@ use std::{collections::HashMap, convert::Infallible, str::FromStr};
 
 pub fn run() {
     let data = std::fs::read_to_string("input/puzzle-11.txt").expect("missing input");
-    //let data = std::fs::read_to_string("test.txt").expect("missing input");
+    // let data = std::fs::read_to_string("test.txt").expect("missing input");
     let dna_sets = data
         .split("\n\n")
-        .into_iter()
         .map(|set| set.parse::<DnaSet>().unwrap())
         .collect::<Vec<_>>();
 
     println!("Puzzle 11, part 1 = {}", part1(&dna_sets));
+    println!("Puzzle 11, part 2 = {}", part2(&dna_sets));
 
     /*
     let data = std::fs::read_to_string("test2.txt").expect("missing input");
@@ -19,13 +19,13 @@ pub fn run() {
         .map(|set| set.parse::<DnaSet>().unwrap())
         .collect::<Vec<_>>();
     */
-    println!("Puzzle 11, part 2 = {}", part2(&dna_sets));
+    println!("Puzzle 11, part 3 = {}", part3(&dna_sets));
 }
 
 fn part1(dna_sets: &[DnaSet]) -> usize {
     let mut biomass = 0;
     for set in dna_sets {
-        let mut tree = Tree::new(set.clone(), TreeID(0));
+        let tree = Tree::new(set.clone(), TreeID(0));
         let mut forest = Forest::new(1);
 
         for year in 0..100 {
@@ -44,6 +44,23 @@ fn part1(dna_sets: &[DnaSet]) -> usize {
     biomass
 }
 
+fn run_stage(trees: &mut [Tree], forest: &mut Forest) {
+    for year in 0..100 {
+        for tree in trees.iter_mut().filter(|tree| !tree.dead) {
+            tree.grow(forest);
+        }
+
+        for tree in trees.iter_mut().filter(|tree| !tree.dead) {
+            let energy_required = tree.energy_required(forest);
+            let energy_produced = tree.energy_produced(forest);
+
+            if year >= 4 && energy_required > energy_produced {
+                tree.dead = true;
+            }
+        }
+    }
+}
+
 fn part2(dna_sets: &[DnaSet]) -> usize {
     let mut forest = Forest::new(dna_sets.len());
 
@@ -53,27 +70,28 @@ fn part2(dna_sets: &[DnaSet]) -> usize {
         .map(|(id, set)| Tree::new(set.clone(), TreeID(id)))
         .collect::<Vec<_>>();
 
-    for year in 0..100 {
-        for tree in trees.iter_mut().filter(|tree| !tree.dead) {
-            tree.grow(&mut forest);
-        }
+    run_stage(&mut trees, &mut forest);
+    forest.mass()
+}
 
-        for tree in trees.iter_mut().filter(|tree| !tree.dead) {
-            let energy_required = tree.energy_required(&forest);
-            let energy_produced = tree.energy_produced(&forest);
+fn part3(dna_sets: &[DnaSet]) -> usize {
+    let mut forest = Forest::new(dna_sets.len());
 
-            if year >= 4 && energy_required > energy_produced {
-                tree.dead = true;
-            }
-        }
-    }
-
-    println!("{}", forest.mass());
-    trees
+    let mut trees = dna_sets
         .iter()
-        .filter(|tree| tree.dead)
-        .map(|tree| tree.mass(&forest))
-        .sum()
+        .enumerate()
+        .map(|(id, set)| Tree::new(set.clone(), TreeID(id)))
+        .collect::<Vec<_>>();
+
+    run_stage(&mut trees, &mut forest);
+
+    trees = forest.reset_sprouts(&trees);
+    run_stage(&mut trees, &mut forest);
+
+    trees = forest.reset_sprouts(&trees);
+    run_stage(&mut trees, &mut forest);
+
+    forest.mass()
 }
 
 #[derive(Debug, Default)]
@@ -160,6 +178,7 @@ impl Forest {
 
     fn _print(&self) {
         for row in 0..=self.height {
+            print!("{row:2} | ");
             for col in self.leftmost..=self.rightmost {
                 if let Some(segment) = self.trees.get(&(row, col)) {
                     match segment {
@@ -181,9 +200,60 @@ impl Forest {
     fn mass_of(&self, id: TreeID) -> usize {
         self.find_segments_for(id).count()
     }
+
+    fn reset_sprouts(&mut self, trees: &[Tree]) -> Vec<Tree> {
+        let mut treelist: Vec<Option<(isize, Tree)>> =
+            vec![None; (self.rightmost - self.leftmost + 1) as usize];
+
+        for row in 0..=self.height {
+            for col in self.leftmost..=self.rightmost {
+                let Some(seg) = self.trees.get(&(row, col)) else {
+                    continue;
+                };
+
+                match seg {
+                    Segment::Stem(_) => {}
+                    Segment::Sprout(tree_id, _) => {
+                        let tree_index = (col - self.leftmost) as usize;
+                        treelist[tree_index] = Some((
+                            col,
+                            Tree {
+                                rules: trees[tree_id.0].rules.clone(),
+                                id: TreeID(tree_index),
+                                dead: false,
+                            },
+                        ));
+                    }
+                }
+            }
+        }
+        let all_trees = treelist
+            .into_iter()
+            .flatten()
+            .enumerate()
+            .map(|(idx, (col, tree))| {
+                (
+                    col,
+                    Tree {
+                        id: TreeID(idx),
+                        ..tree
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+
+        self.trees = all_trees
+            .iter()
+            .map(|(col, tree)| ((0isize, *col), Segment::Sprout(tree.id, 0)))
+            .collect();
+
+        self.height = 1;
+
+        all_trees.into_iter().map(|(_, tree)| tree).collect()
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Tree {
     rules: DnaSet,
     id: TreeID,
@@ -216,7 +286,7 @@ impl Tree {
         forest.mass_of(self.id)
     }
 
-    fn grow(&mut self, forest: &mut Forest) {
+    fn grow(&self, forest: &mut Forest) {
         let mut new_forest: Forest = forest.get_segments(self.id);
 
         for (pos, segment) in forest.find_segments_for(self.id) {
